@@ -10,6 +10,11 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef, confusion_matrix,
 from node2vec import Node2Vec as n2v
 
 # constants
+
+'''
+https://towardsdatascience.com/node-classification-with-node2vec-58892845697b
+'''
+
 queries = [
     'automl', 'machinelearning', 'data', 'phyiscs', 'mathematics', 'recommendation system', 'nlp', 'neural networks'
 ]
@@ -191,7 +196,6 @@ def clf_eval(clf, x_test, y_test):
             y_test
         )
     '''
-    y_pred = clf.predict(x_test)
     y_true = y_test
 
     y_pred = clf.predict(x_test)
