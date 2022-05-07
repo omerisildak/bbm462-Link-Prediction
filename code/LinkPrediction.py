@@ -11,6 +11,10 @@ from collections import Counter
 import multiprocessing
 from IPython.display import display, HTML
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, matthews_corrcoef, confusion_matrix, classification_report
+from sklearn.ensemble import GradientBoostingClassifier
+
+
 
 from stellargraph.data import BiasedRandomWalk
 from gensim.models import Word2Vec
@@ -22,13 +26,17 @@ from sklearn.preprocessing import StandardScaler
 pd.set_option('display.max_columns', None)
 
 
+
+
 dataset = datasets.Cora()
 graph,_= dataset.load()
+
 
 # Define an edge splitter on the original graph:
 edge_splitter_test = EdgeSplitter(graph)
 
 # Randomly sample a fraction p=0.1 of all positive links, and same number of negative links, from graph, and obtain the
+
 # reduced graph graph_test with the sampled links removed:
 graph_test, examples_test, labels_test = edge_splitter_test.train_test_split(
     p=0.1, method="global"
@@ -74,6 +82,11 @@ dataframe=pd.DataFrame(
     columns=("Split", "Number of Examples", "Hidden from", "Picked from", "Use"),
 ).set_index("Split")
 display(dataframe)
+
+
+
+
+
 
 
 p = 1.0
@@ -240,3 +253,30 @@ plt.scatter(
 plt.show()
 
 #adamic-adar grafic f1-score
+
+
+
+clf = GradientBoostingClassifier()
+
+# train the model
+clf.fit(examples_train, labels_train)
+
+y_pred = clf.predict(examples_model_selection)
+x_pred = clf.predict(examples_train)
+test_acc = accuracy_score(labels_model_selection, y_pred)
+train_acc = accuracy_score(labels_train, x_pred)
+
+print("Testing Accuracy : ", test_acc)
+print("Training Accuracy : ", train_acc)
+
+print("MCC Score : ", matthews_corrcoef(labels_model_selection, y_pred))
+
+print("Test Confusion Matrix : ")
+print(confusion_matrix(y_pred,labels_model_selection))
+
+print("Test Classification Report : ")
+print(classification_report(labels_model_selection, clf.predict(examples_model_selection)))
+
+
+
+
