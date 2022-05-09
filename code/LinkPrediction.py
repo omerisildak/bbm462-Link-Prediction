@@ -13,9 +13,8 @@ from IPython.display import display, HTML
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, matthews_corrcoef, confusion_matrix, classification_report
 from sklearn.ensemble import GradientBoostingClassifier
-
-
-
+from stellargraph.data import BiasedRandomWalk
+from gensim.models import Word2Vec
 from stellargraph.data import BiasedRandomWalk
 from gensim.models import Word2Vec
 from sklearn.pipeline import Pipeline
@@ -25,6 +24,12 @@ from sklearn.preprocessing import StandardScaler
 
 pd.set_option('display.max_columns', None)
 
+'''
+https://stellargraph.readthedocs.io/en/stable/demos/link-prediction/node2vec-link-prediction.html
+
+'''
+
+
 
 
 
@@ -32,17 +37,13 @@ dataset = datasets.Cora()
 graph,_= dataset.load()
 
 
-# Define an edge splitter on the original graph:
 edge_splitter_test = EdgeSplitter(graph)
 
-# Randomly sample a fraction p=0.1 of all positive links, and same number of negative links, from graph, and obtain the
 
-# reduced graph graph_test with the sampled links removed:
 graph_test, examples_test, labels_test = edge_splitter_test.train_test_split(
     p=0.1, method="global"
 )
 
-# Do the same process to compute a training subset from within the test graph
 edge_splitter_train = EdgeSplitter(graph_test, graph)
 graph_train, examples, labels = edge_splitter_train.train_test_split(
     p=0.1, method="global"
@@ -87,19 +88,14 @@ display(dataframe)
 
 
 
-
-
-p = 1.0
-q = 1.0
+p = 2.0
+q = 2.0
 dimensions = 16
 num_walks = 10
 walk_length = 80
 window_size = 10
 num_iter = 1
 workers = multiprocessing.cpu_count()
-
-from stellargraph.data import BiasedRandomWalk
-from gensim.models import Word2Vec
 
 
 def node2vec_embedding(graph, name):
@@ -126,11 +122,8 @@ embedding_test = node2vec_embedding(graph_test, "Test Graph")
 embedding_train = node2vec_embedding(graph_train, "Train Graph")
 
 
-'''
-Link Prediction Part
-'''
 
-# 1. link embeddings
+
 def link_examples_to_features(link_examples, transform_node, binary_operator):
     return [
         binary_operator(transform_node(src), transform_node(dst))
@@ -138,7 +131,6 @@ def link_examples_to_features(link_examples, transform_node, binary_operator):
     ]
 
 
-# 2. training classifier
 def train_link_prediction_model(
     link_examples, link_labels, get_embedding, binary_operator
 ):
@@ -155,7 +147,6 @@ def link_prediction_classifier(max_iter=2000):
     return Pipeline(steps=[("sc", StandardScaler()), ("clf", lr_clf)])
 
 
-# 3. and 4. evaluate classifier
 def evaluate_link_prediction_model(
     clf, link_examples_test, link_labels_test, get_embedding, binary_operator
 ):
@@ -227,7 +218,6 @@ display(roc_auc_score)
 
 
 
-# Calculate edge features for test data
 link_features = link_examples_to_features(
     examples_test, embedding_test, best_result["binary_operator"]
 )
@@ -236,13 +226,11 @@ link_features = link_examples_to_features(
 
 
 
-# Learn a projection from 128 dimensions to 2
 pca = PCA(n_components=2)
 X_transformed = pca.fit_transform(link_features)
 
 
 
-# plot the 2-dimensional points
 plt.figure(figsize=(10, 10))
 plt.scatter(
     X_transformed[:, 0],
@@ -252,13 +240,10 @@ plt.scatter(
 )
 plt.show()
 
-#adamic-adar grafic f1-score
-
 
 
 clf = GradientBoostingClassifier()
 
-# train the model
 clf.fit(examples_train, labels_train)
 
 y_pred = clf.predict(examples_model_selection)
