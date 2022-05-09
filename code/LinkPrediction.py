@@ -160,7 +160,6 @@ def evaluate_link_prediction_model(
 def evaluate_roc_auc(clf, link_features, link_labels):
     predicted = clf.predict_proba(link_features)
 
-    # check which class corresponds to positive links
     positive_column = list(clf.classes_).index(1)
     return roc_auc_score(link_labels, predicted[:, positive_column])
 
